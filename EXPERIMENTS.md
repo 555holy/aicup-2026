@@ -11,6 +11,40 @@
 - [ ] 小改實驗（兩個子題各一個）
 - [ ] 報告
 
+## 交接事項
+
+### 下一步：完整訓練（尚未開始）
+
+開始前要等使用者同意，並確認 Windows 已關閉睡眠、筆電接上電源且不蓋螢幕。
+
+```bash
+tmux new -d -s train 'cd ~/aicup-2026 && ~/venvs/aicup/bin/python scripts/run_notebook.py rank-prediction.ipynb --mode full --run-id baseline-rank; ~/venvs/aicup/bin/python scripts/run_notebook.py player-identification.ipynb --mode full --run-id baseline-player'
+tail -f ~/aicup-2026/runs/baseline-rank/run.log
+```
+
+依試跑等比例估算，只能當參考：棋力預測約 3.5 小時；玩家辨識至少 2 小時，也可能因讀取大量小檔案而更久。
+
+跑完要做：更新本檔的執行紀錄、用 `check_submission.py` 檢查提交檔，再由使用者上傳。
+
+### 還沒驗證
+
+- 玩家辨識的推論：沒有測試集，還沒跑過。
+- 「第 1 個 epoch 沒學到東西就停止」的檢查：只在完整模式生效，還沒觸發過。
+- 完整訓練的實際時間和 RAM 峰值。WSL 上限約 15.6 GB，試跑最高約 10.2 GB。不夠時可調高上限（電腦有 31 GB），但要重啟 WSL。
+
+### 已知缺口
+
+- **還沒有「只跑推論」的方式。** 現在重跑 notebook 會重新訓練，所以玩家辨識補推論和只改推論的小改實驗，都要先補這個功能。
+- 提交用的 CSV 和 `history.csv` 被 `.gitignore` 排除，只存在本機的 `runs/`，要另外保存並繳交。
+- repo 是 private，如果用 GitHub 連結繳交程式，要先確認助教看得到。
+
+### 使用者要做或決定的事
+
+- 下載玩家辨識的 4 個測試集 CSV。
+- 截試跑圖：`runs/trial-rank/rank-prediction.ipynb`、`runs/trial-player/player-identification.ipynb`。
+- 決定小改實驗（尚未決定）。建議選不用重新訓練的：棋力預測改用對數機率加總；玩家辨識改變使用的手數。
+- 可選：上傳 `runs/trial-rank/submission_rank.csv`，測試隊伍帳號和上傳流程。排行榜沒有提交次數上限。
+
 ## 執行紀錄
 
 | Run ID | 子題 | 模式 | Commit | 改了什麼 | 最佳 val | Public | 耗時 | 備註 |
