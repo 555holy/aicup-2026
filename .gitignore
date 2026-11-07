@@ -21,3 +21,7 @@ __pycache__/
 .ipynb_checkpoints/
 .vscode/
 .DS_Store
+
+# 試跑特徵與執行紀錄
+trial/
+*.log

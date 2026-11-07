@@ -1,0 +1,9 @@
+notebook: player-identification.ipynb
+mode: trial
+commit: dc081b4 (有未 commit 的修改)
+started: 2026-11-07 15:08:13
+minutes: 0.7
+peak_ram_mib: 5416
+peak_swap_mib: 1534
+peak_gpu_mem_mib: 2464
+status: ok
