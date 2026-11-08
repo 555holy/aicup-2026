@@ -1,0 +1,9 @@
+notebook: player-identification.ipynb
+mode: full
+commit: 0076eb8 (有未 commit 的修改)
+started: 2026-11-08 09:19:53
+minutes: 124.3
+peak_ram_mib: 9883
+peak_swap_mib: 2935
+peak_gpu_mem_mib: 2479
+status: ok

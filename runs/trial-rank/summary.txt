@@ -1,9 +1,0 @@
-notebook: rank-prediction.ipynb
-mode: trial
-commit: dc081b4 (有未 commit 的修改)
-started: 2026-11-07 15:06:58
-minutes: 1.2
-peak_ram_mib: 10230
-peak_swap_mib: 1536
-peak_gpu_mem_mib: 9722
-status: ok
