@@ -2,6 +2,8 @@
 """執行 notebook，邊跑邊保存結果，並記錄資源用量。
 
 用法：python scripts/run_notebook.py <notebook.ipynb> --mode trial|full --run-id <名稱>
+只跑推論：再加 --infer-weights <模型路徑>，會拿掉標了 train 標籤的 cell
+小改實驗 A：再加 --normalize（比距離前把平均向量縮回長度 1）
 
 輸出都在 runs/<名稱>/：
   <notebook>.ipynb  保留輸出的 notebook，每個 cell 跑完就存一次
@@ -109,7 +111,14 @@ def main():
     parser.add_argument('--mode', choices=['trial', 'full'], required=True)
     parser.add_argument('--run-id', required=True)
     parser.add_argument('--min-available-mib', type=int, default=800)
+    parser.add_argument('--infer-weights',
+                        help='載入這個模型只跑推論，拿掉標了 train 標籤的 cell')
+    parser.add_argument('--normalize', action='store_true',
+                        help='小改實驗 A：推論時平均向量先縮回長度 1 再比距離')
     args = parser.parse_args()
+
+    if args.infer_weights and not os.path.isfile(os.path.join(REPO, args.infer_weights)):
+        sys.exit('找不到模型 %s' % args.infer_weights)
 
     run_dir = os.path.join(REPO, 'runs', args.run_id)
     if os.path.exists(run_dir):
@@ -119,6 +128,8 @@ def main():
     source = os.path.join(REPO, args.notebook)
     output = os.path.join(run_dir, os.path.basename(args.notebook))
     nb = nbformat.read(source, as_version=4)
+    if args.infer_weights:
+        nb.cells = [c for c in nb.cells if 'train' not in c.metadata.get('tags', [])]
 
     def save(**_):
         tmp = output + '.tmp'
@@ -127,6 +138,8 @@ def main():
 
     os.environ['RUN_MODE'] = args.mode
     os.environ['RUN_DIR'] = os.path.relpath(run_dir, REPO)
+    os.environ['INFER_WEIGHTS'] = args.infer_weights or ''
+    os.environ['NORMALIZE'] = '1' if args.normalize else '0'
 
     commit, dirty = git_state()
     start = time.time()
@@ -155,6 +168,8 @@ def main():
     summary = [
         'notebook: %s' % args.notebook,
         'mode: %s' % args.mode,
+        'infer_weights: %s' % (args.infer_weights or '-（有訓練）'),
+        'normalize: %s' % args.normalize,
         'commit: %s%s' % (commit, ' (有未 commit 的修改)' if dirty else ''),
         'started: %s' % time.strftime('%F %T', time.localtime(start)),
         'minutes: %.1f' % minutes,
