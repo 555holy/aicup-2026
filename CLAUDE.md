@@ -4,9 +4,17 @@
 
 截止日：2026-11-16。**只做玩家辨識**（2026-11-08 使用者告知作業範圍改變，不用跑棋力預測），完成流程、成功提交並解釋結果。
 
-**排行榜名次不計分，不追求調參。** 配分：環境與試跑 15、完整訓練 25、成功提交 30、小改實驗 20、心得與分工 10。
+**排行榜名次不計分，不追求調參。** 作業原文見 `ASSIGNMENT.md`（原文要求兩個子題都做，範圍縮小是使用者告知，報告要寫清楚）。
 
-要交：3–5 頁報告 PDF、修改後的程式、排行榜截圖、提交 CSV。
+| 項目 | 分數 | 要交 |
+|---|---|---|
+| 環境與試跑 | 15 | 環境資訊（GPU、PyTorch 版本）、試跑輸出截圖 |
+| 完整訓練 | 25 | train/val 曲線、訓練時間、最佳 epoch 的 val loss |
+| 成功提交 | 30 | 排行榜截圖（隊名、Public 分數）、提交的 CSV |
+| 小改實驗 | 20 | 改了什麼、改前改後分數、簡短解釋（要重新提交拿分數） |
+| 心得與分工 | 10 | 遇到的問題和解法、誰做了什麼 |
+
+要交：3–5 頁報告 PDF（涵蓋上表每一項）、修改後的程式（notebook 或 GitHub 連結）、排行榜截圖、提交 CSV。各項進度記在 `EXPERIMENTS.md`。
 
 ## 專案結構
 
@@ -21,8 +29,8 @@
 ## 常用指令
 
 ```bash
-~/venvs/aicup/bin/python scripts/run_notebook.py rank-prediction.ipynb --mode trial --run-id <名稱>
-~/venvs/aicup/bin/python scripts/check_submission.py runs/<名稱>/submission_rank.csv
+~/venvs/aicup/bin/python scripts/run_notebook.py player-identification.ipynb --mode trial --run-id <名稱>
+~/venvs/aicup/bin/python scripts/check_submission.py runs/<名稱>/submission_player.csv
 ```
 
 ## 工作方式

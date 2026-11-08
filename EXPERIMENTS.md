@@ -5,7 +5,8 @@
 - [x] 環境：RTX 5080（16 GB）、Python 3.10.12、PyTorch 2.11.0+cu128
 - **範圍：只做玩家辨識**（2026-11-08 作業改成不用跑棋力預測；下面棋力預測的紀錄保留當參考）
 - [x] 資料：訓練集 v1.1、玩家辨識測試集（`aicup2026_player_identification_tests_20261030.zip`，2026-11-08 放進 `tests/`，官方範例提交檔通過 `check_submission.py`）
-- [ ] 試跑截圖（環境資訊、試跑輸出）
+- [x] 試跑：`trial-player`（2026-11-08 重跑，環境資訊 → 抽特徵 → 訓練 1 epoch → 推論都有執行，提交檔通過檢查）
+- [ ] 試跑截圖：`runs/trial-player/player-identification.ipynb`（由使用者截）
 - [x] 完整訓練：玩家辨識（`baseline-player`，2026-11-08，提交檔已通過 `check_submission.py`）
 - [ ] 提交 baseline、記錄 Public 分數與排行榜截圖
 - [ ] 小改實驗
@@ -37,6 +38,18 @@
 - 截試跑圖：`runs/trial-player/player-identification.ipynb`（2026-11-08 重跑的版本，含環境資訊、抽特徵、訓練、推論）。
 - 決定小改實驗（尚未決定）。建議選不用重新訓練的，例如改變推論時使用的手數。
 
+## 遇到的問題與解法
+
+報告「心得與分工」用。誰做了什麼由使用者自己寫；AI 協助的部分要如實寫進報告。
+
+| 日期 | 問題 | 怎麼發現 | 解法 |
+|---|---|---|---|
+| 11-07 | 玩家辨識測試集比訓練集晚拿到 | 試跑時 notebook 印出「缺少測試集，跳過推論」 | notebook 改成缺測試集時跳過推論、不讓整份失敗；先做訓練，測試集到了再補推論 |
+| 11-08 | 作業範圍改成只做玩家辨識 | 使用者告知 | 棋力預測不再執行，刪掉 `trial-rank`；CLAUDE.md、EXPERIMENTS.md 改成只做玩家辨識（原文要求兩個子題，報告要說明） |
+| 11-08 | 舊的兩次試跑各缺一段：一次沒推論、一次沿用舊特徵沒抽取 | 對照作業要求「抽特徵 → 訓練 → 推論都要跑通」，檢查 log 發現 | 刪掉舊試跑和 `trial/`，notebook 加印環境資訊，重跑一次完整試跑 |
+| 11-08 | 試跑在推論中途 Kernel died | `summary.txt` 寫 `failed: Kernel died` | 查系統紀錄沒有記憶體不足；推測是對話關閉時背景工作被停掉，改用 tmux 執行後成功 |
+| 11-08 | `summary.txt` 把 baseline 標成「有未 commit 的修改」，但 notebook 沒改 | 讀 summary 時發現 | 原因是 `git status` 連未追蹤的檔案也算；先 commit 再執行，之後的試跑就是乾淨的 commit |
+
 ## 執行紀錄
 
 | Run ID | 子題 | 模式 | Commit | 改了什麼 | 最佳 val | Public | 耗時 | 備註 |
@@ -45,6 +58,8 @@
 | trial-player（舊版，已刪除；沒跑推論） | 玩家辨識 | trial | 整理前（未 commit） | 每級 1,000 局、200 步 | val loss 0.5268 | — | 0.7 分 | 只驗證流程，推論待測試集；RAM 峰值約 5.4 GB、GPU 約 2.4 GB |
 | trial-player-infer（已刪除；沿用舊特徵沒有抽取） | 玩家辨識 | trial | 0076eb8 | 同 trial-player，加上真實測試集推論 | val loss 0.5268 | 不上傳 | 19.7 分 | 第一次跑通推論：800 列、通過 `check_submission.py`；每份測試集的候選庫約 8.5 分、查詢約 1 分；RAM 峰值約 7.0 GB、GPU 約 2.4 GB |
 | baseline-player | 玩家辨識 | full | 0076eb8（EXPERIMENTS.md 有未 commit 修改） | 官方 baseline 設定：5 輪 × 15,000 步，用 val loss 挑模型 | val loss 0.3513（第 5 輪） | 待上傳 | 124.3 分 | 每輪 val loss 0.4662 → 0.3758 → 0.3608 → 0.3537 → 0.3513；800 列、通過 `check_submission.py`；RAM 峰值約 9.7 GB、swap 約 2.9 GB、GPU 約 2.4 GB |
+| trial-player（第一次重跑，中斷） | 玩家辨識 | trial | 4c91d5e | 環境資訊 + 每級 1,000 局、1 epoch（200 步）+ 推論 | val loss 0.5268 | — | 2.7 分 | 推論做到 public 候選 5,120 局時 Kernel died；系統紀錄沒有記憶體不足，當時可用約 7.6 GB；推測是對話關閉時背景工作被停掉，資料夾已刪 |
+| trial-player | 玩家辨識 | trial | 4c91d5e | 同上，改在 tmux 執行；`trial/` 先刪掉，抽特徵真的重做 | val loss 0.5268 | 不上傳 | 20.0 分 | 每級抽 1,000 局，濾掉只有 1 局的玩家後剩 8,191 局／2,105 位；抽特徵 0.2 分、0 局解析失敗；推論 800 列、通過 `check_submission.py`；RAM 峰值約 8.2 GB、GPU 約 2.4 GB |
 
 ## 和官方 baseline 的差異
 

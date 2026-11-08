@@ -1,0 +1,9 @@
+notebook: player-identification.ipynb
+mode: trial
+commit: 4c91d5e
+started: 2026-11-08 16:33:10
+minutes: 20.0
+peak_ram_mib: 8426
+peak_swap_mib: 1029
+peak_gpu_mem_mib: 2479
+status: ok
