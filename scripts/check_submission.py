@@ -12,15 +12,30 @@ import pandas as pd
 
 LEVELS = {'D', 'C', 'B', 'A', '1D', '2D', '3D', '4D', '5D', '6D'}
 TOP_COLS = ['top_%d' % i for i in range(1, 6)]
-SPLITS = {'pub_': 'public', 'priv_': 'private'}
 EXPECTED_PER_SPLIT = 400
+# 前綴 → (題目檔, 候選檔)。玩家辨識 2026-11-08 官方新增 pub2_／priv2_，共 1,600 題。
+RANK_SPLITS = {
+    'pub_': ('rank_prediction_test_public.csv', None),
+    'priv_': ('rank_prediction_test_private.csv', None),
+}
+PLAYER_SPLITS = {
+    'pub_': ('player_identification_test_public.csv',
+             'player_identification_candidates_public.csv'),
+    'priv_': ('player_identification_test_private.csv',
+              'player_identification_candidates_private.csv'),
+    'pub2_': ('player_identification_test2_public.csv',
+              'player_identification_candidates2_public.csv'),
+    'priv2_': ('player_identification_test2_private.csv',
+               'player_identification_candidates2_private.csv'),
+}
 MAX_SHOWN = 20
 
 
-def split_of(question_id):
-    for prefix, split in SPLITS.items():
+def prefix_of(question_id, splits):
+    # pub2_q_0001 不是以 pub_ 開頭，所以 pub_ 和 pub2_ 不會混淆
+    for prefix in splits:
         if question_id.startswith(prefix):
-            return split
+            return prefix
     return None
 
 
@@ -29,29 +44,31 @@ def read_column(path, column):
                            keep_default_na=False)[column])
 
 
-def check_questions(df, test_pattern, errors, warnings):
+def check_questions(df, splits, tests_dir, errors, warnings):
     """檢查題數、前綴、重複，以及題號是否和官方題目檔完全相同。"""
     ids = df['question_id']
-    if len(df) != 2 * EXPECTED_PER_SPLIT:
-        errors.append('總列數是 %d，應為 %d' % (len(df), 2 * EXPECTED_PER_SPLIT))
+    expected = len(splits) * EXPECTED_PER_SPLIT
+    if len(df) != expected:
+        errors.append('總列數是 %d，應為 %d' % (len(df), expected))
 
     for row, qid in enumerate(ids, 1):
-        if split_of(qid) is None:
-            errors.append('第 %d 列：%s 沒有 pub_ 或 priv_ 前綴' % (row, qid))
+        if prefix_of(qid, splits) is None:
+            errors.append('第 %d 列：%s 的前綴不是 %s 其中之一'
+                          % (row, qid, '、'.join(splits)))
     for qid in ids[ids.duplicated()].unique():
         errors.append('題號重複：%s' % qid)
 
-    for prefix, split in SPLITS.items():
-        count = int(ids.str.startswith(prefix).sum())
+    for prefix, (test_file, _) in splits.items():
+        count = sum(prefix_of(q, splits) == prefix for q in ids)
         if count != EXPECTED_PER_SPLIT:
             errors.append('%s 開頭有 %d 題，應為 %d' % (prefix, count, EXPECTED_PER_SPLIT))
 
-        path = test_pattern % split
+        path = os.path.join(tests_dir, test_file)
         if not os.path.exists(path):
-            warnings.append('找不到 %s，未比對 %s 題號' % (path, split))
+            warnings.append('找不到 %s，未比對 %s 題號' % (path, prefix))
             continue
         official = read_column(path, 'question_id')
-        mine = {q for q in ids if q.startswith(prefix)}
+        mine = {q for q in ids if prefix_of(q, splits) == prefix}
         for qid in sorted(official - mine):
             errors.append('缺題：%s' % qid)
         for qid in sorted(mine - official):
@@ -59,27 +76,25 @@ def check_questions(df, test_pattern, errors, warnings):
 
 
 def check_rank(df, tests_dir, errors, warnings):
-    check_questions(df, os.path.join(tests_dir, 'rank_prediction_test_%s.csv'),
-                    errors, warnings)
+    check_questions(df, RANK_SPLITS, tests_dir, errors, warnings)
     for row, (qid, rank) in enumerate(zip(df['question_id'], df['pred_rank']), 1):
         if rank not in LEVELS:
             errors.append('第 %d 列：%s 的等級 %r 不在 10 個等級內' % (row, qid, rank))
 
 
 def check_player(df, tests_dir, errors, warnings):
-    check_questions(df, os.path.join(tests_dir, 'player_identification_test_%s.csv'),
-                    errors, warnings)
+    check_questions(df, PLAYER_SPLITS, tests_dir, errors, warnings)
     pools = {}
-    for split in SPLITS.values():
-        path = os.path.join(tests_dir, 'player_identification_candidates_%s.csv' % split)
+    for prefix, (_, cand_file) in PLAYER_SPLITS.items():
+        path = os.path.join(tests_dir, cand_file)
         if os.path.exists(path):
-            pools[split] = read_column(path, 'player_id')
+            pools[prefix] = read_column(path, 'player_id')
         else:
-            warnings.append('找不到 %s，未比對 %s 候選玩家' % (path, split))
+            warnings.append('找不到 %s，未比對 %s 候選玩家' % (path, prefix))
 
     for row, r in enumerate(df.to_dict('records'), 1):
         qid = r['question_id']
-        split = split_of(qid)
+        split = prefix_of(qid, PLAYER_SPLITS)
         picks = [r[c] for c in TOP_COLS]
         if '' in picks:
             errors.append('第 %d 列：%s 有空白人選' % (row, qid))
@@ -87,7 +102,7 @@ def check_player(df, tests_dir, errors, warnings):
             errors.append('第 %d 列：%s 的 5 個人選有重複' % (row, qid))
         if split is None:
             continue
-        prefix = 'pub_p_' if split == 'public' else 'priv_p_'
+        prefix = split + 'p_'   # pub2_ 的題目只能填 pub2_p_ 開頭的玩家
         for col, player in zip(TOP_COLS, picks):
             if not player:
                 continue

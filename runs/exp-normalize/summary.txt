@@ -1,0 +1,11 @@
+notebook: player-identification.ipynb
+mode: full
+infer_weights: runs/baseline-player/player-trained-models/best_model.pth
+normalize: True
+commit: 56ac160
+started: 2026-11-08 17:08:37
+minutes: 22.7
+peak_ram_mib: 6457
+peak_swap_mib: 1029
+peak_gpu_mem_mib: 835
+status: ok
