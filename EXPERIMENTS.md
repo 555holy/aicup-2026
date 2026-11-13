@@ -9,20 +9,36 @@
 - [x] 試跑：`trial-player`（2026-11-08 重跑，環境資訊 → 抽特徵 → 訓練 1 epoch → 推論都有執行，提交檔通過檢查）
 - [ ] 試跑截圖：`runs/trial-player/player-identification.ipynb`（由使用者截）
 - [x] 完整訓練：玩家辨識（`baseline-player`，2026-11-08；它的 800 列提交檔是舊格式，不能上傳，要用 v2 重新推論）
-- [ ] 提交 baseline、記錄 Public 分數與排行榜截圖
-- [ ] 小改實驗 A（推論時平均向量先縮回長度 1）：`exp-normalize` 是舊格式 800 列，不能上傳，要用 v2 重新推論
+- [x] 提交 baseline：`baseline-v2` Public **0.3657362**（2026-11-12 14:56:50 上傳）
+- [ ] 排行榜截圖（要看得到隊名與 Public 分數，由使用者截）
+- [x] 小改實驗 A（推論時平均向量先縮回長度 1）：`exp-normalize-v2` Public **0.3565804**（14:57:06 上傳），比 baseline **低 0.0092**，變差
 - [ ] 報告
 
 ## 交接事項
 
-### 下一步：用 v2 測試集重新推論兩次，再上傳（2026-11-12）
+### Public 分數（2026-11-12 上傳，使用者提供截圖）
 
-11-08 的兩份 800 列提交檔上傳時被 AIdea 擋下（「上傳檔案不合規則」），原因是官方更新了測試集與提交格式。notebook 與 `check_submission.py` 已改成 4 份、1,600 列，下一步用同一個 baseline 模型只跑推論兩次：
+| 提交 | 上傳時間 | Public |
+|---|---|---|
+| `baseline-v2`（不正規化） | 14:56:50 | **0.3657362** |
+| `exp-normalize-v2`（實驗 A） | 14:57:06 | **0.3565804**（-0.0092，排名 53/55） |
 
-- `baseline-v2`：不正規化（baseline）
-- `exp-normalize-v2`：`--normalize`（實驗 A）
+上傳順序依照「先 baseline、再實驗 A」的安排，使用者確認改了變差。
 
-通過 `check_submission.py` 後由使用者上傳，各自記下 Public 分數並截排行榜圖。v2 的 Public 分數 = 原 Public 400 題與新 Public 400 題的平均。
+### v2 提交檔的準備經過
+
+11-08 的兩份 800 列提交檔上傳時被 AIdea 擋下（「上傳檔案不合規則」），原因是官方更新了測試集與提交格式。notebook 與 `check_submission.py` 已改成 4 份、1,600 列，2026-11-12 用同一個 baseline 模型重新推論，兩份都通過 `check_submission.py`：
+
+- baseline：`runs/baseline-v2/submission_player.csv`
+- 實驗 A：`runs/exp-normalize-v2/submission_player.csv`
+
+由使用者上傳，各自記下 Public 分數並截排行榜圖。v2 的 Public 分數 = 原 Public 400 題與新 Public 400 題的平均，**不能直接和官方 notebook 的 0.2845（只有原測試集）比較**。
+
+Windows 桌面 `aicup-upload\baseline-v2\`、`aicup-upload\exp-normalize-v2\` 各有一份可上傳的複本：內容與 `runs/` 相同，換行符號改成和官方範例一樣的 `\r\n`。同資料夾裡的 `baseline-player`、`exp-normalize`、`official-sample` 和兩個改名的 csv 是舊格式，可以刪掉。
+
+驗證：
+- 兩份的前 800 題（原測試集）和 11-08 的 `baseline-player`、`exp-normalize` 完全相同，代表改成 4 份沒有影響原本的部分，推論結果也可以重現。
+- 四份都是「解析失敗、填預設答案 0 題」。
 
 ### 測試集 v2 的內容（新增測試集 `pub2_`／`priv2_`）
 
@@ -36,7 +52,15 @@
 - **改什麼：** 推論時，400 個候選重心和每題的查詢平均向量，先各自除以自己的長度，再算 L2 距離。模型和 baseline 是同一個（`runs/baseline-player/player-trained-models/best_model.pth`），沒有重新訓練。
 - **為什麼：** 模型輸出的每個向量長度都是 1，訓練時比的是方向。很多向量取平均後會變短，而且棋風越不一致的人越短；直接比距離時，長度差異會干擾判斷（例：方向相同但比較短的正確答案，距離反而比方向偏掉的錯誤答案遠）。縮回長度 1 後只比方向，和訓練時一致。
 - **不保證進步：** 長度可能也帶有「下法穩不穩定」的資訊，丟掉可能有損失，要看 Public 分數。
-- **和 baseline 的排名差異（舊版 800 列、還沒有分數，只是看預測改變多少）：** public 400 題中 top_1 不同 48 題、前 5 名名單有變 201 題；private top_1 不同 73 題、名單有變 216 題。
+- **結果：變差。** Public 0.3657362 → 0.3565804（-0.0092）。推測原因：平均向量的長度反映「這個人每一手的風格有多一致」，這本身就是個人特徵，可以幫忙分辨方向相近的兩個人；正規化把這個資訊丟掉了。資料顯示「長度幫忙」的情況多於「長度干擾」的情況。這是推測，沒有另外驗證；Public 分數是原測試集與新增測試集的平均，也看不出是哪一份變差。
+- **和 baseline 的排名差異（還沒有分數，只是看預測改變多少；`baseline-v2` 對 `exp-normalize-v2`）：**
+
+  | 前綴 | top_1 不同 | 前 5 名名單有變 |
+  |---|---|---|
+  | `pub_` | 48／400 | 201／400 |
+  | `priv_` | 73／400 | 216／400 |
+  | `pub2_` | 88／400 | 236／400 |
+  | `priv2_` | 80／400 | 240／400 |
 
 ### 完整訓練的實測（baseline-player）
 
@@ -54,7 +78,7 @@
 ### 使用者要做或決定的事
 
 - 截試跑圖：`runs/trial-player/player-identification.ipynb`（2026-11-08 重跑的版本，含環境資訊、抽特徵、訓練、推論）。
-- 上傳 v2 的兩份提交檔（`baseline-v2`、`exp-normalize-v2`，跑完後），記錄 Public 分數、截排行榜圖。
+- 截排行榜圖（隊名、Public 分數）；繳交的 CSV 用 `runs/baseline-v2/` 與 `runs/exp-normalize-v2/` 的 `submission_player.csv`。
 
 ## 遇到的問題與解法
 
@@ -81,6 +105,8 @@
 | trial-player（第一次重跑，中斷） | 玩家辨識 | trial | 4c91d5e | 環境資訊 + 每級 1,000 局、1 epoch（200 步）+ 推論 | val loss 0.5268 | — | 2.7 分 | 推論做到 public 候選 5,120 局時 Kernel died；系統紀錄沒有記憶體不足，當時可用約 7.6 GB；推測是對話關閉時背景工作被停掉，資料夾已刪 |
 | trial-player | 玩家辨識 | trial | 4c91d5e | 同上，改在 tmux 執行；`trial/` 先刪掉，抽特徵真的重做 | val loss 0.5268 | 不上傳 | 20.0 分 | 每級抽 1,000 局，濾掉只有 1 局的玩家後剩 8,191 局／2,105 位；抽特徵 0.2 分、0 局解析失敗；推論 800 列、通過 `check_submission.py`；RAM 峰值約 8.2 GB、GPU 約 2.4 GB |
 | exp-normalize | 玩家辨識 | full（只推論） | 56ac160 | 實驗 A：推論時重心與查詢平均向量先縮回長度 1（`--normalize`），用 baseline 的 best_model.pth，不重新訓練 | 同 baseline（0.3513） | 不能上傳（舊格式 800 列） | 22.7 分 | 800 列、通過 `check_submission.py`；和 baseline 比 top_1 不同 public 48／private 73 題；RAM 峰值約 6.3 GB、swap 約 1.0 GB、GPU 約 0.8 GB |
+| baseline-v2 | 玩家辨識 | full（只推論） | c377f15 | 測試集 v2（4 份、1,600 列），用 baseline-player 的 best_model.pth，不正規化 | 同 baseline（0.3513） | 0.3657362 | 25.6 分 | 通過 `check_submission.py`；前 800 題和 baseline-player 完全相同；四份填預設答案 0 題；候選重心 400／400／600／600 個；RAM 峰值約 5.8 GB、GPU 約 0.8 GB |
+| exp-normalize-v2 | 玩家辨識 | full（只推論） | c377f15（summary 標有未 commit 的修改：是排在前面的 baseline-v2 產生的未追蹤檔，notebook 沒改） | 同上，加 `--normalize`（實驗 A） | 同 baseline（0.3513） | 0.3565804 | 26.1 分 | 通過 `check_submission.py`；前 800 題和 exp-normalize 完全相同；四份填預設答案 0 題；RAM 峰值約 5.8 GB、GPU 約 0.8 GB |
 
 ## 和官方 baseline 的差異
 

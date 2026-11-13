@@ -1,0 +1,11 @@
+notebook: player-identification.ipynb
+mode: full
+infer_weights: runs/baseline-player/player-trained-models/best_model.pth
+normalize: True
+commit: c377f15 (有未 commit 的修改)
+started: 2026-11-12 11:14:11
+minutes: 26.1
+peak_ram_mib: 5986
+peak_swap_mib: 0
+peak_gpu_mem_mib: 826
+status: ok
