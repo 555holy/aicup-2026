@@ -12,7 +12,8 @@
 - [x] 提交 baseline：`baseline-v2` Public **0.3657362**（2026-11-12 14:56:50 上傳）
 - [ ] 排行榜截圖（要看得到隊名與 Public 分數，由使用者截）
 - [x] 小改實驗 A（推論時平均向量先縮回長度 1）：`exp-normalize-v2` Public **0.3565804**（14:57:06 上傳），比 baseline **低 0.0092**，變差
-- [ ] 報告
+- [ ] 報告：初稿在 Windows 桌面 `aicup-upload\AICUP2026_玩家辨識報告.docx`（2026-11-13，Word 實排 4 頁）；使用者要補隊名、成員、心得、分工，確認黃底處後匯出 PDF。產生報告的腳本和圖不進 git（使用者決定）
+- [ ] 程式繳交：GitHub 連結 https://github.com/555holy/aicup-2026（使用者選擇改成 public；要先 push，再到 GitHub 改可見度）
 
 ## 交接事項
 
